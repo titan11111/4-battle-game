@@ -61,16 +61,25 @@ class Character {
         let newMagic = null;
         switch (this.level) {
             case 3:
-                newMagic = { name: 'ファイアー', damage: 20, mpCost: 5, type: 'attack' };
+                newMagic = { name: 'ヒノカゲ', damage: 22, mpCost: 4, type: 'attack', element: 'fire' };
                 break;
             case 6:
-                newMagic = { name: 'アイスボルト', damage: 25, mpCost: 8, type: 'attack' };
+                newMagic = { name: 'ユキハネ', damage: 30, mpCost: 7, type: 'attack', element: 'ice' };
                 break;
-            case 10:
-                newMagic = { name: 'サンダーストーム', damage: 35, mpCost: 15, type: 'attack' };
+            case 9:
+                newMagic = { name: 'ドクモリ', damage: 16, mpCost: 8, type: 'poison', element: 'dark' };
+                break;
+            case 12:
+                newMagic = { name: 'イカヅチ', damage: 40, mpCost: 12, type: 'attack', element: 'thunder' };
                 break;
             case 15:
-                newMagic = { name: 'ホーリーライト', healAmount: 30, mpCost: 12, type: 'heal' };
+                newMagic = { name: 'ミコモリ', healAmount: 35, mpCost: 10, type: 'heal', element: 'light' };
+                break;
+            case 18:
+                newMagic = { name: 'チカラダマ', buff: 'attack', buffAmount: 5, buffTurns: 3, mpCost: 10, type: 'buff', element: 'none' };
+                break;
+            case 20:
+                newMagic = { name: 'ホムラギ', damage: 65, mpCost: 20, type: 'attack', element: 'fire' };
                 break;
         }
         if (newMagic) {
@@ -82,15 +91,25 @@ class Character {
 
 // 敵クラス
 class Enemy extends Character {
-    constructor(name, maxHp, attack, sprite, expReward, isBoss = false) {
+    constructor(name, maxHp, attack, sprite, expReward, isBoss = false, actions = null, element = null, weakTo = null, specialAttack = null) {
         super(name, maxHp, 0, attack, sprite);
         this.expReward = expReward;
         this.isBoss = isBoss;
+        this.actions = actions;
+        this.element = element;
+        this.weakTo = weakTo;
+        this.specialAttack = specialAttack;
+        this.turnCount = 0;
     }
-
     getAction() {
+        if (this.specialAttack && Math.random() < 0.1) {
+            return 'specialAttack';
+        }
+        if (this.actions) {
+            return this.actions[Math.floor(Math.random() * this.actions.length)];
+        }
         if (this.isBoss) {
-            const actions = ['attack', 'strongAttack', 'magicAttack', 'specialAttack'];
+            const actions = ['attack', 'strongAttack', 'magicAttack'];
             return actions[Math.floor(Math.random() * actions.length)];
         } else {
             const actions = ['attack', 'attack', 'strongAttack'];
@@ -108,17 +127,27 @@ let actionQueue = [];
 let currentLogIndex = 0;
 let logMessages = [];
 let logTimer = null;
+let lastPlayerState = null;
 
 const enemyData = [
-    { name: 'ゴブリン', hp: 60, attack: 10, sprite: '👹', image: 'images/goburin.png', exp: 25 },
-    { name: 'オーク', hp: 90, attack: 15, sprite: '👺', image: 'images/orc.png', exp: 40 },
-    { name: 'スケルトン', hp: 70, attack: 12, sprite: '💀', image: 'images/skeleton.png', exp: 35 },
-    { name: 'ミミック', hp: 100, attack: 18, sprite: '', image: 'images/mimic.png', exp: 50 }, // 修正: .jpg -> .png
-    { name: 'リトルドラゴン', hp: 120, attack: 20, sprite: '', image: 'images/summon_5.png', exp: 60 }, // 修正: .jpg -> .png
-    { name: 'ファングウルフ', hp: 85, attack: 16, sprite: '', image: 'images/summon_2.png', exp: 45 },
-    { name: 'ロックゴーレム', hp: 150, attack: 22, sprite: '', image: 'images/summon_4.png', exp: 70 }, // 修正: .jpg -> .png
-    { name: 'ゾンビ', hp: 75, attack: 13, sprite: '', image: 'images/zonbi.png', exp: 38 },
-    { name: 'ゴースト', hp: 80, attack: 14, sprite: '👻', image: 'images/ghost.png', exp: 45 }
+    { name: 'おばけ大木', hp: 60, attack: 12, sprite: '', image: 'images/bajegi.png', exp: 25, actions: ['attack', 'strongAttack', 'attack'], element: 'wood', weakTo: 'fire', specialAttack: { name: 'つるのムチ', effect: '全体攻撃＋麻痺' } },
+    { name: 'ゴブリン', hp: 50, attack: 10, sprite: '', image: 'images/goburin.png', exp: 20, actions: ['attack', 'attack', 'strongAttack'], element: 'none', weakTo: null, specialAttack: { name: '盗賊の一撃', effect: '大ダメージ＋MP吸収' } },
+    { name: 'ゴースト', hp: 70, attack: 14, sprite: '', image: 'images/ghost.png', exp: 28, actions: ['attack', 'attack', 'strongAttack'], element: 'dark', weakTo: 'light', specialAttack: { name: '霊体化', effect: '1ターン物理無効' } },
+    { name: '魔女', hp: 80, attack: 18, sprite: '', image: 'images/majo.png', exp: 40, actions: ['attack', 'magicAttack', 'magicAttack'], element: 'dark', weakTo: 'light', specialAttack: { name: '闇の呪詛', effect: '継続ダメージ（毒）' } },
+    { name: 'メジェド', hp: 65, attack: 13, sprite: '', image: 'images/mejed.png', exp: 35, actions: ['attack', 'magicAttack', 'attack'], element: 'light', weakTo: 'dark', specialAttack: { name: '目からビーム', effect: '防御無視の高威力攻撃' } },
+    { name: 'ミミック', hp: 100, attack: 18, sprite: '', image: 'images/mimic.png', exp: 50, actions: ['attack', 'strongAttack', 'attack'], element: 'none', weakTo: null, specialAttack: { name: '擬態', effect: '1度だけ攻撃無効' } },
+    { name: 'ナイト', hp: 120, attack: 20, sprite: '', image: 'images/naito.png', exp: 45, actions: ['attack', 'strongAttack', 'attack'], element: 'none', weakTo: null, specialAttack: { name: 'シールドバッシュ', effect: '大ダメージ＋気絶' } },
+    { name: 'オーデン', hp: 90, attack: 15, sprite: '', image: 'images/oden.png', exp: 32, actions: ['attack', 'strongAttack', 'attack'], element: 'none', weakTo: null, specialAttack: { name: '雷撃', effect: '全体攻撃＋麻痺' } },
+    { name: '破壊ロボ', hp: 110, attack: 22, sprite: '', image: 'images/robo.png', exp: 50, actions: ['attack', 'magicAttack', 'strongAttack'], element: 'machine', weakTo: 'thunder', specialAttack: { name: 'レーザー砲', effect: '高威力単体攻撃' } },
+    { name: '逆立ち族', hp: 85, attack: 17, sprite: '', image: 'images/sakasazoku.png', exp: 36, actions: ['attack', 'strongAttack', 'attack'], element: 'none', weakTo: null, specialAttack: { name: '逆転パンチ', effect: '大ダメージ＋攻撃力UP' } },
+    { name: 'スケルトン', hp: 75, attack: 13, sprite: '', image: 'images/sukeruton.png', exp: 30, actions: ['attack', 'attack', 'strongAttack'], element: 'none', weakTo: null, specialAttack: { name: '骨投げ乱舞', effect: 'ランダム2〜4回攻撃' } },
+    { name: 'スライム', hp: 40, attack: 8, sprite: '', image: 'images/suraimu.png', exp: 15, actions: ['attack', 'attack', 'attack'], element: 'water', weakTo: 'fire', specialAttack: { name: '分裂', effect: 'HP半分以下で分身を呼ぶ' } },
+    { name: '火の鳥', hp: 60, attack: 12, sprite: '', image: 'images/summon_1.png', exp: 30, actions: ['attack', 'magicAttack', 'attack'], element: 'fire', weakTo: 'ice', specialAttack: { name: '炎の翼', effect: '全体火属性攻撃' } },
+    { name: 'ファイトウルフ', hp: 80, attack: 16, sprite: '', image: 'images/summon_2.png', exp: 35, actions: ['attack', 'strongAttack', 'attack'], element: 'beast', weakTo: 'ice', specialAttack: { name: '咆哮', effect: '敵全体の攻撃力UP' } },
+    { name: '海の化身', hp: 100, attack: 20, sprite: '', image: 'images/summon_3.png', exp: 45, actions: ['attack', 'magicAttack', 'strongAttack'], element: 'water', weakTo: 'thunder', specialAttack: { name: '津波', effect: '全体水属性攻撃' } },
+    { name: 'ロック', hp: 130, attack: 24, sprite: '', image: 'images/summon_4.png', exp: 55, actions: ['attack', 'strongAttack', 'attack'], element: 'rock', weakTo: 'thunder', specialAttack: { name: '岩石落とし', effect: '全体攻撃' } },
+    { name: 'みにどらご', hp: 150, attack: 28, sprite: '', image: 'images/summon_5.png', exp: 60, actions: ['attack', 'magicAttack', 'strongAttack'], element: 'fire', weakTo: 'ice', specialAttack: { name: '炎のブレス', effect: '高威力火属性攻撃＋やけど' } },
+    { name: 'ゾンビ', hp: 80, attack: 12, sprite: '', image: 'images/zonbi.png', exp: 25, actions: ['attack', 'attack', 'strongAttack'], element: 'dark', weakTo: 'fire', specialAttack: { name: '毒吐き', effect: '毒状態付与' } }
 ];
 
 const bossData = {
@@ -133,6 +162,9 @@ const bossData = {
 // 音声
 let bgm = null;
 let levelupSound = null;
+let attackPlayerSound = null;
+let attackEnemySound = null;
+let gameoverSound = null;
 let isMuted = false;
 
 // 初期化
@@ -151,7 +183,18 @@ function initGame() {
         currentEnemy.image = bossData.image;
     } else {
         const enemyTemplate = enemyData[Math.floor(Math.random() * enemyData.length)];
-        currentEnemy = new Enemy(enemyTemplate.name, enemyTemplate.hp, enemyTemplate.attack, enemyTemplate.sprite, enemyTemplate.exp);
+        currentEnemy = new Enemy(
+            enemyTemplate.name,
+            enemyTemplate.hp,
+            enemyTemplate.attack,
+            enemyTemplate.sprite,
+            enemyTemplate.exp,
+            false,
+            enemyTemplate.actions,
+            enemyTemplate.element,
+            enemyTemplate.weakTo,
+            enemyTemplate.specialAttack
+        );
         currentEnemy.image = enemyTemplate.image;
     }
 
@@ -170,11 +213,17 @@ function initAudio() {
     if (!bgm) {
         bgm = document.getElementById('bgm');
         levelupSound = document.getElementById('levelup-sound');
+        attackPlayerSound = document.getElementById('attack-player-sound');
+        attackEnemySound = document.getElementById('attack-enemy-sound');
+        gameoverSound = document.getElementById('gameover-sound');
     }
     // ここではBGMの再生/停止は行わず、toggleMute()または startGame() で制御
     const volume = document.getElementById('volume-slider').value / 100;
     if (bgm) bgm.volume = volume * 0.3;
     if (levelupSound) levelupSound.volume = volume;
+    if (attackPlayerSound) attackPlayerSound.volume = volume;
+    if (attackEnemySound) attackEnemySound.volume = volume;
+    if (gameoverSound) gameoverSound.volume = volume;
     if (bgm && !isMuted && gameState === 'battle') { // BGMがすでに再生中でなければ再生
         bgm.play().catch(e => console.log('BGM play failed:', e));
     }
@@ -183,6 +232,9 @@ function initAudio() {
 function stopAllSounds() {
     if (bgm) { bgm.pause(); /* bgm.currentTime = 0; */ } // 戦闘継続のためcurrentTimeはリセットしない
     if (levelupSound) { levelupSound.pause(); levelupSound.currentTime = 0; }
+    if (attackPlayerSound) { attackPlayerSound.pause(); attackPlayerSound.currentTime = 0; }
+    if (attackEnemySound) { attackEnemySound.pause(); attackEnemySound.currentTime = 0; }
+    if (gameoverSound) { gameoverSound.pause(); gameoverSound.currentTime = 0; }
 }
 
 // UI更新
@@ -312,11 +364,95 @@ function clearLogTimer() {
     }
 }
 
+const enemyDeathPoems = {
+    'ゴブリン': [
+        'ぐぬぬ…これが人間の力か…',
+        'オレの宝物…誰にも渡さない…',
+        'また…いつか…会おうぜ…'
+    ],
+    'オーク': [
+        '肉…もっと食べたかった…',
+        'オークの誇り…ここに散る…',
+        '兄弟たちよ…後は頼んだ…'
+    ],
+    'スケルトン': [
+        '骨まで砕かれるとは…無念…',
+        '風に…還る時が来たか…',
+        'カラカラ…静かに眠ろう…'
+    ],
+    'ミミック': [
+        '宝箱の中で…夢を見たかった…',
+        '次は…もっと大きな獲物を…',
+        'ふふ…油断は禁物だぞ…'
+    ],
+    'リトルドラゴン': [
+        'まだ…空を飛びたかった…',
+        '炎が…消えていく…',
+        '兄さん…また会おう…'
+    ],
+    'ファングウルフ': [
+        '群れの仲間たちよ…さようなら…',
+        '月夜に…遠吠えを…',
+        '牙が…折れたか…'
+    ],
+    'ロックゴーレム': [
+        '岩の眠りに…戻る時…',
+        '砕け散る…我が身よ…',
+        '大地と共に…永遠に…'
+    ],
+    'ゾンビ': [
+        'もう一度…生きたかった…',
+        '腐った体も…これまでか…',
+        'うぅ…静かに…眠る…'
+    ],
+    'ゴースト': [
+        'この世に…未練はない…',
+        '霧のように…消えていく…',
+        'ありがとう…さようなら…'
+    ],
+    '魔女': [
+        'これが…勇者の力か…',
+        '世界は…お前に託そう…',
+        '闇は…また蘇る…'
+    ],
+    'メジェド': [
+        'これが…勇者の力か…',
+        '世界は…お前に託そう…',
+        '闇は…また蘇る…'
+    ],
+    '破壊ロボ': [
+        'これが…勇者の力か…',
+        '世界は…お前に託そう…',
+        '闇は…また蘇る…'
+    ],
+    '火の鳥': [
+        'これが…勇者の力か…',
+        '世界は…お前に託そう…',
+        '闇は…また蘇る…'
+    ],
+    '海の化身': [
+        'これが…勇者の力か…',
+        '世界は…お前に託そう…',
+        '闇は…また蘇る…'
+    ],
+    'みにどらご': [
+        'これが…勇者の力か…',
+        '世界は…お前に託そう…',
+        '闇は…また蘇る…'
+    ]
+};
+
 function checkBattleEnd() {
     if (!currentEnemy.isAlive() && gameState === 'battle') {
         gameState = 'win';
         player.addExp(currentEnemy.expReward);
         addLog(`${currentEnemy.name}を倒した！`);
+        // // 辞世の句を表示
+        // const poems = enemyDeathPoems[currentEnemy.name];
+        // if (poems && poems.length > 0) {
+        //     const poem = poems[Math.floor(Math.random() * poems.length)];
+        //     addLog(`「${poem}」`, 'death-poem');
+        // }
         
         // 魔王を倒した場合は特別処理
         if (currentEnemy.isBoss) {
@@ -335,7 +471,18 @@ function checkBattleEnd() {
     } else if (!player.isAlive() && gameState === 'battle') {
         gameState = 'lose';
         addLog('あなたは倒れた...');
-        updateDisplay(); // 「あなたは倒れた...」メッセージと「最初から」ボタンを表示
+        playSound(gameoverSound);
+        // 死んだ時の状態を保存
+        lastPlayerState = {
+            level: player.level,
+            exp: player.exp,
+            nextLevelExp: player.nextLevelExp,
+            maxHp: player.maxHp,
+            maxMp: player.maxMp,
+            attack: player.attack,
+            knownMagic: JSON.parse(JSON.stringify(player.knownMagic))
+        };
+        updateDisplay();
     } else {
         // 戦闘継続の場合
         if (!isPlayerTurn && gameState === 'battle') {
@@ -376,6 +523,7 @@ function showMagicEffectByName(name) {
 // プレイヤー行動
 function playerAttack() {
     if (!isPlayerTurn || gameState !== 'battle') return;
+    playSound(attackPlayerSound); // 効果音再設定
     const damage = player.attack + Math.floor(Math.random() * 10);
     currentEnemy.takeDamage(damage);
     addLog(`勇者の攻撃！${currentEnemy.name}に${damage}のダメージ！`, 'damage');
@@ -394,12 +542,32 @@ function playerMagic() {
     showMagicEffectByName(magic.name);
     
     if (magic.type === 'attack') {
-        const dmg = magic.damage + Math.floor(Math.random() * 10);
+        let dmg = magic.damage + Math.floor(Math.random() * 10);
+        // 弱点判定
+        if (magic.element && currentEnemy.weakTo === magic.element) {
+            dmg = Math.floor(dmg * 1.5);
+            addLog('弱点を突いた！', 'damage');
+        }
         currentEnemy.takeDamage(dmg);
         addLog(`勇者は${magic.name}を唱えた！${currentEnemy.name}に${dmg}のダメージ！`, 'damage');
     } else if (magic.type === 'heal') {
         player.heal(magic.healAmount);
         addLog(`勇者は${magic.name}を唱えた！HPが${magic.healAmount}回復！`, 'heal');
+    } else if (magic.type === 'poison') {
+        const poisonDamage = Math.floor(magic.damage * 0.5);
+        if (magic.element && currentEnemy.weakTo === magic.element) {
+            poisonDamage = Math.floor(poisonDamage * 1.5);
+            addLog('弱点を突いた！', 'damage');
+        }
+        currentEnemy.takeDamage(poisonDamage);
+        addLog(`${currentEnemy.name}は${magic.name}によって毒をうつ！${poisonDamage}のダメージ！`, 'damage');
+    } else if (magic.type === 'buff') {
+        currentEnemy.attack += magic.buffAmount;
+        addLog(`${currentEnemy.name}の攻撃力が${magic.buffAmount}上がった！`, 'buff');
+        setTimeout(() => {
+            currentEnemy.attack -= magic.buffAmount;
+            addLog(`${currentEnemy.name}の攻撃力が元に戻った！`, 'buff');
+        }, magic.buffTurns * 1000);
     }
     isPlayerTurn = false;
     updateDisplay();
@@ -460,11 +628,20 @@ function enemyTurn() {
             actionName = '魔法攻撃';
             break;
         case 'specialAttack':
-            damage = Math.floor(currentEnemy.attack * 2) + Math.floor(Math.random() * 15);
-            actionName = '必殺技';
+            // 特殊攻撃の演出・ダメージ例
+            if (currentEnemy.specialAttack) {
+                actionName = currentEnemy.specialAttack.name;
+                // 特殊攻撃のダメージは攻撃力の2倍＋α
+                damage = Math.floor(currentEnemy.attack * 2) + Math.floor(Math.random() * 20);
+                addLog(`【${currentEnemy.name}の必殺技！】${actionName}！`, 'special');
+                addLog(`効果: ${currentEnemy.specialAttack.effect}`, 'special');
+            } else {
+                actionName = '必殺技';
+                damage = Math.floor(currentEnemy.attack * 2) + Math.floor(Math.random() * 20);
+            }
             break;
     }
-    
+    playSound(attackEnemySound); // 効果音再設定
     player.takeDamage(damage);
     addLog(`${currentEnemy.name}の${actionName}！勇者に${damage}のダメージ！`, 'damage');
     isPlayerTurn = true;
@@ -485,11 +662,16 @@ function restartGame() {
     logMessages = [];
     currentLogIndex = 0;
     clearLogTimer();
-    
     // プレイヤーをリセット
-    player = new Character('勇者', 100, 50, 20, '🛡️');
-    
-    if (bgm) bgm.pause(); // BGMを停止して最初から再生
+    if (lastPlayerState) {
+        player = new Character('勇者', lastPlayerState.maxHp, lastPlayerState.maxMp, lastPlayerState.attack, '🛡️', lastPlayerState.level, lastPlayerState.exp, lastPlayerState.nextLevelExp);
+        player.knownMagic = JSON.parse(JSON.stringify(lastPlayerState.knownMagic));
+        player.hp = player.maxHp;
+        player.mp = player.maxMp;
+    } else {
+        player = new Character('勇者', 100, 50, 20, '🛡️');
+    }
+    if (bgm) bgm.pause();
     initGame();
     initAudio();
 }
@@ -526,4 +708,7 @@ function changeVolume() {
     const volume = document.getElementById('volume-slider').value / 100;
     if (bgm) bgm.volume = volume * 0.3;
     if (levelupSound) levelupSound.volume = volume;
+    if (attackPlayerSound) attackPlayerSound.volume = volume;
+    if (attackEnemySound) attackEnemySound.volume = volume;
+    if (gameoverSound) gameoverSound.volume = volume;
 }
