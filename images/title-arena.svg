@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" fill="none" aria-hidden="true">
+  <defs>
+    <radialGradient id="arenaFloor" cx="50%" cy="72%" r="55%">
+      <stop offset="0%" stop-color="#5a4830"/>
+      <stop offset="45%" stop-color="#2a2018"/>
+      <stop offset="100%" stop-color="#0a080c"/>
+    </radialGradient>
+    <radialGradient id="oculus" cx="50%" cy="18%" r="40%">
+      <stop offset="0%" stop-color="#ffe6a0" stop-opacity="0.95"/>
+      <stop offset="35%" stop-color="#ffb060" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ff6040" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ray" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe8a8" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ff8040" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a342c"/>
+      <stop offset="100%" stop-color="#16120e"/>
+    </linearGradient>
+    <linearGradient id="ember" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ff4020" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ff8040" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#ffe080" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- night sky -->
+  <rect width="800" height="520" fill="#07060c"/>
+  <circle cx="400" cy="70" r="180" fill="url(#oculus)"/>
+
+  <!-- god rays -->
+  <g opacity="0.55">
+    <polygon points="400,40 300,520 340,520" fill="url(#ray)"/>
+    <polygon points="400,40 360,520 400,520" fill="url(#ray)" opacity="0.7"/>
+    <polygon points="400,40 420,520 460,520" fill="url(#ray)" opacity="0.85"/>
+    <polygon points="400,40 500,520 540,520" fill="url(#ray)"/>
+  </g>
+
+  <!-- upper stands left -->
+  <path d="M0 120 C120 80 220 70 320 90 L280 220 C180 200 80 210 0 250 Z" fill="url(#stone)" opacity="0.95"/>
+  <path d="M800 120 C680 80 580 70 480 90 L520 220 C620 200 720 210 800 250 Z" fill="url(#stone)" opacity="0.95"/>
+
+  <!-- mid arches -->
+  <g fill="#1c1814" opacity="0.9">
+    <path d="M40 250 h90 v90 h-90z"/>
+    <path d="M160 240 h90 v100 h-90z"/>
+    <path d="M550 240 h90 v100 h-90z"/>
+    <path d="M670 250 h90 v90 h-90z"/>
+  </g>
+  <g stroke="#6a5a40" stroke-width="3" fill="none" opacity="0.55">
+    <path d="M40 250 h90 v90 h-90z"/>
+    <path d="M160 240 h90 v100 h-90z"/>
+    <path d="M550 240 h90 v100 h-90z"/>
+    <path d="M670 250 h90 v90 h-90z"/>
+    <path d="M55 250 a30 35 0 0 1 60 0"/>
+    <path d="M175 240 a30 35 0 0 1 60 0"/>
+    <path d="M565 240 a30 35 0 0 1 60 0"/>
+    <path d="M685 250 a30 35 0 0 1 60 0"/>
+  </g>
+
+  <!-- crowd dots -->
+  <g fill="#c8b090" opacity="0.25">
+    <circle cx="70" cy="200" r="3"/><circle cx="95" cy="195" r="2.5"/><circle cx="120" cy="202" r="3"/>
+    <circle cx="190" cy="188" r="3"/><circle cx="215" cy="192" r="2.5"/><circle cx="240" cy="186" r="3"/>
+    <circle cx="560" cy="188" r="3"/><circle cx="585" cy="192" r="2.5"/><circle cx="610" cy="186" r="3"/>
+    <circle cx="680" cy="200" r="3"/><circle cx="705" cy="195" r="2.5"/><circle cx="730" cy="202" r="3"/>
+  </g>
+
+  <!-- arena ring -->
+  <ellipse cx="400" cy="400" rx="310" ry="95" fill="url(#arenaFloor)"/>
+  <ellipse cx="400" cy="400" rx="310" ry="95" stroke="#8a7040" stroke-width="4" opacity="0.7"/>
+  <ellipse cx="400" cy="400" rx="250" ry="72" stroke="#c4a060" stroke-width="2" opacity="0.35"/>
+  <ellipse cx="400" cy="400" rx="180" ry="48" stroke="#ffe08a" stroke-width="1.5" opacity="0.2"/>
+
+  <!-- floor cracks -->
+  <g stroke="#1a120c" stroke-width="2" opacity="0.45">
+    <path d="M250 390 L310 410 L280 430"/>
+    <path d="M480 385 L530 405 L560 395"/>
+    <path d="M390 360 L410 400 L395 430"/>
+  </g>
+
+  <!-- torch left -->
+  <g transform="translate(95,300)">
+    <rect x="-6" y="40" width="12" height="70" fill="#3a2818"/>
+    <rect x="-14" y="30" width="28" height="14" fill="#5a4030"/>
+    <ellipse cx="0" cy="20" rx="16" ry="28" fill="url(#ember)">
+      <animate attributeName="ry" values="26;32;26" dur="1.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.75;1;0.75" dur="1.2s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="0" cy="8" rx="7" ry="12" fill="#ffe8a0" opacity="0.9">
+      <animate attributeName="cy" values="8;4;8" dur="0.9s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- torch right -->
+  <g transform="translate(705,300)">
+    <rect x="-6" y="40" width="12" height="70" fill="#3a2818"/>
+    <rect x="-14" y="30" width="28" height="14" fill="#5a4030"/>
+    <ellipse cx="0" cy="20" rx="16" ry="28" fill="url(#ember)">
+      <animate attributeName="ry" values="28;34;28" dur="1.1s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="1.1s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="0" cy="8" rx="7" ry="12" fill="#ffe8a0" opacity="0.9">
+      <animate attributeName="cy" values="8;3;8" dur="0.85s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- crimson mist near ground -->
+  <ellipse cx="400" cy="430" rx="280" ry="40" fill="#801020" opacity="0.18"/>
+</svg>
